@@ -5,9 +5,9 @@ import {
     subscribeToDocumentChanges,
     POTENTIAL_REPLACEMENT,
 } from "./diagnostics";
-import {
-    find_replacements
-} from "./rust_interface";
+// import {
+//     findReplacements
+// } from "./rust_interface";
 
 const COMMAND = "haskell-type-alias-resolver.replace-alias";
 
@@ -58,48 +58,61 @@ export class AliasReplacer implements vscode.CodeActionProvider {
 
     public provideCodeActions(
         document: vscode.TextDocument,
-        range: vscode.Range
+        range: vscode.Range,
+        context: vscode.CodeActionContext
     ): vscode.CodeAction[] | undefined {
-        if (!this.isAtStartOfTarget(document, range)) {
-            return;
-        }
 
-        const replacement1 = this.createFix(document, range, REPLACEMENT1);
-        const replacement2 = this.createFix(document, range, REPLACEMENT2);
+        const diagnostics = context.diagnostics;
 
-        replacement1.isPreferred = true;
+        const actions = diagnostics
+            .filter(d => d.code === POTENTIAL_REPLACEMENT)
+            .map(d => this.createFix(document, d));
 
-        const commandAction = this.createCommand();
-
-        return [replacement1, replacement2, commandAction];
-    }
-
-    private isAtStartOfTarget(
-        document: vscode.TextDocument,
-        range: vscode.Range
-    ) {
-        // NOT IMPLEMENTED
-        return true;
+        return actions
     }
 
     private createFix(
         document: vscode.TextDocument,
-        range: vscode.Range,
-        replacement: string
+        diagnostic: vscode.Diagnostic
     ) {
+        const replaced_type = diagnostic.relatedInformation![0].message;
+
         const fix = new vscode.CodeAction(
-            `Replace with ${replacement}`,
+            `Replace with ${replaced_type}`,
             vscode.CodeActionKind.QuickFix
         );
 
         fix.edit = new vscode.WorkspaceEdit();
         fix.edit.replace(
             document.uri,
-            new vscode.Range(range.start, range.start.translate(0, 13)),
-            replacement
+            diagnostic.range,
+            replaced_type
         );
-        return fix;
+
+        fix.isPreferred = true;
+
+        return fix
     }
+
+
+    // private createFix(
+    //     document: vscode.TextDocument,
+    //     range: vscode.Range,
+    //     replacement: string
+    // ) {
+    //     const fix = new vscode.CodeAction(
+    //         `Replace with ${replacement}`,
+    //         vscode.CodeActionKind.QuickFix
+    //     );
+
+    //     fix.edit = new vscode.WorkspaceEdit();
+    //     fix.edit.replace(
+    //         document.uri,
+    //         new vscode.Range(range.start, range.start.translate(0, 13)),
+    //         replacement
+    //     );
+    //     return fix;
+    // }
 
     private createCommand(): vscode.CodeAction {
         const action = new vscode.CodeAction(
@@ -112,39 +125,39 @@ export class AliasReplacer implements vscode.CodeActionProvider {
 }
 
 // TODO: What should this be called?
-export class AliasInfo implements vscode.CodeActionProvider {
-    public static readonly providedCodeActionKinds = [
-        vscode.CodeActionKind.QuickFix,
-    ];
+// export class AliasInfo implements vscode.CodeActionProvider {
+//     public static readonly providedCodeActionKinds = [
+//         vscode.CodeActionKind.QuickFix,
+//     ];
 
-    provideCodeActions(
-        document: vscode.TextDocument,
-        range: vscode.Range | vscode.Selection,
-        context: vscode.CodeActionContext,
-        token: vscode.CancellationToken
-    ): vscode.CodeAction[] {
-        // for each diagnostic entry that has the matching `code`, create a code action command
-        return context.diagnostics
-            .filter((diagnostic) => diagnostic.code === POTENTIAL_REPLACEMENT)
-            .map((diagnostic) => this.createCommandCodeAction(diagnostic));
-    }
+//     provideCodeActions(
+//         document: vscode.TextDocument,
+//         range: vscode.Range | vscode.Selection,
+//         context: vscode.CodeActionContext,
+//         token: vscode.CancellationToken
+//     ): vscode.CodeAction[] {
+//         // for each diagnostic entry that has the matching `code`, create a code action command
+//         return context.diagnostics
+//             .filter((diagnostic) => diagnostic.code === POTENTIAL_REPLACEMENT)
+//             .map((diagnostic) => this.createCommandCodeAction(diagnostic));
+//     }
 
-    private createCommandCodeAction(
-        diagnostic: vscode.Diagnostic
-    ): vscode.CodeAction {
-        const action = new vscode.CodeAction(
-            "Learn more...",
-            vscode.CodeActionKind.QuickFix
-        );
-        action.command = {
-            command: COMMAND,
-            title: "TITLE2",
-            tooltip: "TOOLTIP2",
-        };
-        action.diagnostics = [diagnostic];
-        action.isPreferred = true;
-        return action;
-    }
-}
+//     private createCommandCodeAction(
+//         diagnostic: vscode.Diagnostic
+//     ): vscode.CodeAction {
+//         const action = new vscode.CodeAction(
+//             "Learn more...",
+//             vscode.CodeActionKind.QuickFix
+//         );
+//         action.command = {
+//             command: COMMAND,
+//             title: "TITLE2",
+//             tooltip: "TOOLTIP2",
+//         };
+//         action.diagnostics = [diagnostic];
+//         action.isPreferred = true;
+//         return action;
+//     }
+// }
 // this method is called when your extension is deactivated
 export function deactivate() { }

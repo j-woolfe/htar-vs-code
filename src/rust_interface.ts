@@ -12,7 +12,7 @@ type RequestAlias = {
     source: string;
 };
 
-type Match = {
+export type Match = {
     matched: string;
     location: Range;
     variable_map: Map<string, string>;
@@ -29,7 +29,7 @@ type Position = {
     col: number;
 };
 
-export function find_replacements(
+export function findReplacements(
     doc: vscode.TextDocument,
     extensionPath: string,
     targetType: string
@@ -76,7 +76,7 @@ export function find_replacements(
         );
 
         const resolverProcess = spawnSync(
-            exePath + ` --target="String -> Int" --path="${path.join(extensionPath, "test.hs")}"`,
+            exePath + ` --target="${targetType}" --path="${path.join(extensionPath, "test.hs")}"`,
             // exePath + ` --help`,
             {
                 shell: '/bin/bash', // TODO: Fix for other OSes
