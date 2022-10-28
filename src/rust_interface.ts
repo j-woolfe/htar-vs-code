@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import * as os from "os";
 import { spawnSync } from "child_process";
 
 type Response = {
@@ -68,30 +69,26 @@ export function findReplacements(
             fileName = "none";
         }
 
-        // TODO: Fix for other OSes
         const exePath = path.join(
             extensionPath,
             "bin",
-            "rust-ts-experiments"
+            os.type() === 'Windows_NT' ? "htar.exe" : "htar",
         );
 
         const resolverProcess = spawnSync(
             exePath + ` --target="${targetType}" --path="${path.join(extensionPath, "test.hs")}"`,
             // exePath + ` --help`,
             {
-                shell: '/bin/bash', // TODO: Fix for other OSes
+                shell: os.type() === 'Windows_NT' ? 'powershell.exe' : '/bin/bash',
                 cwd: workPath,
                 encoding: 'utf8',
             }
         );
 
-        // console.log(resolverProcess.stdout);
-        console.log(resolverProcess);
+        // console.log(resolverProcess);
 
         let result: Response = JSON.parse(resolverProcess.stdout);
 
         return result;
     }
-
-    console.log("workPaths?.length is falsy");
 }
